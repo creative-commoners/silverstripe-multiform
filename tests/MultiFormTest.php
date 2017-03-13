@@ -5,6 +5,7 @@ use SilverStripe\Dev\TestOnly;
 
 use SilverStripe\Control\Controller;
 use SilverStripe\MultiForm\MultiForm;
+use SilverStripe\MultiForm\MultiFormStep;
 
 /**
  * MultiFormTest
@@ -24,162 +25,186 @@ use SilverStripe\MultiForm\MultiForm;
  * @package multiform
  * @subpackage tests
  */
-class MultiFormTest extends FunctionalTest {
+class MultiFormTest extends FunctionalTest
+{
+    public static $fixture_file = 'multiform/tests/MultiFormTest.yml';
 
-	public static $fixture_file = 'multiform/tests/MultiFormTest.yml';
+    protected $usesDatabase = true;
 
-	protected $controller;
+    protected $controller;
 
-	public function setUp() {
-		parent::setUp();
+    protected $extraDataObjects = array(
+        'MultiFormTest_StepOne',
+        'MultiFormTest_StepTwo',
+        'MultiFormTest_StepThree'
+    );
 
-		$this->controller = new MultiFormTest_Controller();
-		$this->form = $this->controller->Form();
-	}
 
-	public function testInitialisingForm() {
-		$this->assertTrue(is_numeric($this->form->getCurrentStep()->ID) && ($this->form->getCurrentStep()->ID > 0));
-		$this->assertTrue(is_numeric($this->form->getSession()->ID) && ($this->form->getSession()->ID > 0));
-		$this->assertEquals('MultiFormTest_StepOne', $this->form->getStartStep());
-	}
+    public function setUp()
+    {
+        parent::setUp();
 
-	public function testSessionGeneration() {
-		$this->assertTrue($this->form->session->ID > 0);
-	}
+        $this->controller = new MultiFormTest_Controller();
+        $this->form = $this->controller->Form();
+    }
 
-	public function testMemberLogging() {
-		// Grab any user to fake being logged in as, and ensure that after a session is written it has
-		// that user as the submitter.
-		$userId = Member::get_one("Member")->ID;
-		$this->session()->inst_set('loggedInAs', $userId);
+    public function testInitialisingForm()
+    {
+        $this->assertTrue(is_numeric($this->form->getCurrentStep()->ID) && ($this->form->getCurrentStep()->ID > 0));
+        $this->assertTrue(is_numeric($this->form->getSession()->ID) && ($this->form->getSession()->ID > 0));
+        $this->assertEquals('MultiFormTest_StepOne', $this->form->getStartStep());
+    }
 
-		$session = $this->form->session;
-		$session->write();
+    public function testSessionGeneration()
+    {
+        $this->assertTrue($this->form->session->ID > 0);
+    }
 
-		$this->assertEquals($userId, $session->SubmitterID);
-	}
+    public function testMemberLogging()
+    {
+        // Grab any user to fake being logged in as, and ensure that after a session is written it has
+        // that user as the submitter.
+        $userId = Member::get_one("Member")->ID;
+        $this->session()->inst_set('loggedInAs', $userId);
 
-	public function testSecondStep() {
-		$this->assertEquals('MultiFormTest_StepTwo', $this->form->getCurrentStep()->getNextStep());
-	}
+        $session = $this->form->session;
+        $session->write();
 
-	public function testParentForm() {
-		$currentStep = $this->form->getCurrentStep();
-		$this->assertEquals($currentStep->getForm()->class, $this->form->class);
-	}
+        $this->assertEquals($userId, $session->SubmitterID);
+    }
 
-	public function testTotalStepCount() {
-		$this->assertEquals(3, $this->form->getAllStepsLinear()->Count());
-	}
+    public function testSecondStep()
+    {
+        $this->assertEquals('MultiFormTest_StepTwo', $this->form->getCurrentStep()->getNextStep());
+    }
 
-	public function testCompletedSession() {
-		$this->form->setCurrentSessionHash($this->form->session->Hash);
-		$this->assertInstanceOf('MultiFormSession', $this->form->getCurrentSession());
-		$this->form->session->markCompleted();
-		$this->assertNull($this->form->getCurrentSession());
-	}
+    public function testParentForm()
+    {
+        $currentStep = $this->form->getCurrentStep();
+        $this->assertEquals($currentStep->getForm()->class, $this->form->class);
+    }
 
-	public function testIncorrectSessionIdentifier() {
-		$this->form->setCurrentSessionHash('sdfsdf3432325325sfsdfdf'); // made up!
+    public function testTotalStepCount()
+    {
+        $this->assertEquals(3, $this->form->getAllStepsLinear()->Count());
+    }
 
-		// A new session is generated, even though we made up the identifier
-		$this->assertInstanceOf('MultiFormSession', $this->form->session);
-	}
+    public function testCompletedSession()
+    {
+        $this->form->setCurrentSessionHash($this->form->session->Hash);
+        $this->assertInstanceOf('MultiFormSession', $this->form->getCurrentSession());
+        $this->form->session->markCompleted();
+        $this->assertNull($this->form->getCurrentSession());
+    }
 
-	function testCustomGetVar() {
-		Config::nest();
-		Config::inst()->update('MultiForm', 'get_var', 'SuperSessionID');
+    public function testIncorrectSessionIdentifier()
+    {
+        $this->form->setCurrentSessionHash('sdfsdf3432325325sfsdfdf'); // made up!
 
-		$form = $this->controller->Form();
-		$this->assertContains('SuperSessionID', $form::$ignored_fields, "GET var wasn't added to ignored fields");
-		$this->assertContains('SuperSessionID', $form->FormAction(), "Form action doesn't contain correct session
+        // A new session is generated, even though we made up the identifier
+        $this->assertInstanceOf('MultiFormSession', $this->form->session);
+    }
+
+    public function testCustomGetVar()
+    {
+        Config::nest();
+        Config::inst()->update('MultiForm', 'get_var', 'SuperSessionID');
+
+        $form = $this->controller->Form();
+        $this->assertContains('SuperSessionID', $form::$ignored_fields, "GET var wasn't added to ignored fields");
+        $this->assertContains('SuperSessionID', $form->FormAction(), "Form action doesn't contain correct session
 			ID parameter");
-		$this->assertContains('SuperSessionID', $form->getCurrentStep()->Link(), "Form step doesn't contain correct
+        $this->assertContains('SuperSessionID', $form->getCurrentStep()->Link(), "Form step doesn't contain correct
 			session ID parameter");
 
-		Config::unnest();
+        Config::unnest();
+    }
 }
 
+
+/**
+ * @package multiform
+ * @subpackage tests
+ */
+class MultiFormTest_Form extends MultiForm implements TestOnly
+{
+    public static $start_step = 'MultiFormTest_StepOne';
+
+    public function getStartStep()
+    {
+        return self::$start_step;
+    }
 }
 
 /**
  * @package multiform
  * @subpackage tests
  */
-class MultiFormTest_Controller extends Controller implements TestOnly {
+class MultiFormTest_Controller extends Controller implements TestOnly
+{
+    public function Link($action = null)
+    {
+        return 'MultiFormTest_Controller';
+    }
 
-	public function Link($action = NULL) {
-		return 'MultiFormTest_Controller';
-	}
+    public function Form($request = null)
+    {
+        $form = new MultiFormTest_Form($this, 'Form');
+        $form->setHTMLID('MultiFormTest_Form');
+        return $form;
+    }
+}
 
-	public function Form($request = null) {
-		$form = new MultiFormTest_Form($this, 'Form');
-		$form->setHTMLID('MultiFormTest_Form');
-		return $form;
-	}
+
+/**
+ * @package multiform
+ * @subpackage tests
+ */
+class MultiFormTest_StepOne extends MultiFormStep implements TestOnly
+{
+    public static $next_steps = 'MultiFormTest_StepTwo';
+
+    public function getFields()
+    {
+        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
+        return new $class(
+            new TextField('FirstName', 'First name'),
+            new TextField('Surname', 'Surname'),
+            new EmailField('Email', 'Email address')
+        );
+    }
 }
 
 /**
  * @package multiform
  * @subpackage tests
  */
-class MultiFormTest_Form extends MultiForm implements TestOnly {
+class MultiFormTest_StepTwo extends MultiFormStep implements TestOnly
+{
+    public static $next_steps = 'MultiFormTest_StepThree';
 
-	public static $start_step = 'MultiFormTest_StepOne';
-
-	public function getStartStep() {
-		return self::$start_step;
-	}
-
+    public function getFields()
+    {
+        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
+        return new $class(
+            new TextareaField('Comments', 'Tell us a bit about yourself...')
+        );
+    }
 }
 
 /**
  * @package multiform
  * @subpackage tests
  */
-class MultiFormTest_StepOne extends MultiFormStep implements TestOnly {
+class MultiFormTest_StepThree extends MultiFormStep implements TestOnly
+{
+    public static $is_final_step = true;
 
-	public static $next_steps = 'MultiFormTest_StepTwo';
-
-	public function getFields() {
-		$class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-		return new $class(
-			new TextField('FirstName', 'First name'),
-			new TextField('Surname', 'Surname'),
-			new EmailField('Email', 'Email address')
-		);
-	}
-}
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_StepTwo extends MultiFormStep implements TestOnly {
-
-	public static $next_steps = 'MultiFormTest_StepThree';
-
-	public function getFields() {
-		$class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-		return new $class(
-			new TextareaField('Comments', 'Tell us a bit about yourself...')
-		);
-	}
-}
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_StepThree extends MultiFormStep implements TestOnly {
-
-	public static $is_final_step = true;
-
-	public function getFields() {
-		$class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-		return new $class(
-			new TextField('Test', 'Anything else you\'d like to tell us?')
-		);
-	}
-
+    public function getFields()
+    {
+        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
+        return new $class(
+            new TextField('Test', 'Anything else you\'d like to tell us?')
+        );
+    }
 }
