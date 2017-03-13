@@ -3,6 +3,7 @@
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Dev\TestOnly;
+use SilverStripe\MultiForm\MultiFormObjectDecorator;
 
 /**
  * @package multiform
@@ -15,7 +16,7 @@ class MultiFormObjectDecoratorTest extends SapphireTest
     protected $usesDatabase = true;
 
     protected $requiredExtensions = array(
-        'MultiFormObjectDecorator_DataObject' => array('MultiFormObjectDecorator')
+        'MultiFormObjectDecorator_DataObject' => array(MultiFormObjectDecorator::class)
     );
 
     protected $extraDataObjects = array(

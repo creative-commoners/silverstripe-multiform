@@ -6,6 +6,7 @@ use SilverStripe\Dev\TestOnly;
 use SilverStripe\Control\Controller;
 use SilverStripe\MultiForm\MultiForm;
 use SilverStripe\MultiForm\MultiFormStep;
+use SilverStripe\Security\Member;
 
 /**
  * MultiFormTest
