@@ -1,12 +1,15 @@
 <?php
 
+namespace SilverStripe\MultiForm;
+
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\Member;
+
 /**
- * Serializes one or more {@link MultiFormStep}s into
- * a database object.
+ * Serializes one or more {@link MultiFormStep}s into a database object.
  *
- * MultiFormSession also stores the current step, so that
- * the {@link MultiForm} and {@link MultiFormStep} classes
- * know what the current step is.
+ * MultiFormSession also stores the current step, so tha the {@link MultiForm} and {@link MultiFormStep} classes know
+ * what the current step is.
  *
  * @package multiform
  */
@@ -18,12 +21,12 @@ class MultiFormSession extends DataObject {
 	);
 
 	private static $has_one = array(
-		'Submitter' => 'Member',
-		'CurrentStep' => 'MultiFormStep'
+		'Submitter' => 'SilverStripe\Security\Member',
+		'CurrentStep' => 'SilverStripe\MultiForm\MultiFormStep'
 	);
 
 	private static $has_many = array(
-		'FormSteps' => 'MultiFormStep'
+		'FormSteps' => 'SilverStripe\MultiForm\MultiFormStep'
 	);
 
 	/**

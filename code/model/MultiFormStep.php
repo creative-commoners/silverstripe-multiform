@@ -1,5 +1,11 @@
 <?php
 
+namespace SilverStripe\MultiForm;
+
+use SilverStripe\ORM\DataObject;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Control\Controller;
+
 /**
  * MultiFormStep controls the behaviour of a single form step in the MultiForm
  * process. All form steps are required to be subclasses of this class, as it
@@ -16,7 +22,7 @@ class MultiFormStep extends DataObject {
 	);
 
 	private static $has_one = array(
-		'Session' => 'MultiFormSession'
+		'Session' => 'SilverStripe\MultiForm\MultiFormSession'
 	);
 
 	/**
@@ -109,7 +115,7 @@ class MultiFormStep extends DataObject {
 	 * @return FieldList
 	 */
 	public function getExtraActions() {
-		return (class_exists('FieldList')) ? new FieldList() : new FieldSet();
+		return new FieldList();
 	}
 
 	/**
@@ -276,7 +282,7 @@ class MultiFormStep extends DataObject {
 	 * @return string Classname of a {@link MultiFormStep} subclass
 	 */
 	public function getPreviousStep() {
-		$steps = DataObject::get('MultiFormStep', "\"SessionID\" = {$this->SessionID}", '"LastEdited" DESC');
+		$steps = DataObject::get(MultiFormStep::class, "\"SessionID\" = {$this->SessionID}", '"LastEdited" DESC');
 		if($steps) {
 			foreach($steps as $step) {
 				$step->setForm($this->form);

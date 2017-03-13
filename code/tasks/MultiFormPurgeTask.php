@@ -1,5 +1,7 @@
 <?php
 
+use SilverStripe\Dev\BuildTask;
+
 /**
  * Task to clean out all {@link MultiFormSession} objects from the database.
  *

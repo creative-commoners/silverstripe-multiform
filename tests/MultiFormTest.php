@@ -1,4 +1,11 @@
 <?php
+
+use SilverStripe\Dev\FunctionalTest;
+use SilverStripe\Dev\TestOnly;
+
+use SilverStripe\Control\Controller;
+use SilverStripe\MultiForm\MultiForm;
+
 /**
  * MultiFormTest
  * For testing purposes, we have some test classes:
@@ -85,14 +92,14 @@ class MultiFormTest extends FunctionalTest {
 
 		$form = $this->controller->Form();
 		$this->assertContains('SuperSessionID', $form::$ignored_fields, "GET var wasn't added to ignored fields");
-		$this->assertContains('SuperSessionID', $form->FormAction(), "Form action doesn't contain correct session 
+		$this->assertContains('SuperSessionID', $form->FormAction(), "Form action doesn't contain correct session
 			ID parameter");
-		$this->assertContains('SuperSessionID', $form->getCurrentStep()->Link(), "Form step doesn't contain correct 
+		$this->assertContains('SuperSessionID', $form->getCurrentStep()->Link(), "Form step doesn't contain correct
 			session ID parameter");
 
 		Config::unnest();
 }
-	
+
 }
 
 /**
@@ -101,7 +108,7 @@ class MultiFormTest extends FunctionalTest {
  */
 class MultiFormTest_Controller extends Controller implements TestOnly {
 
-	public function Link() {
+	public function Link($action = NULL) {
 		return 'MultiFormTest_Controller';
 	}
 
@@ -143,7 +150,7 @@ class MultiFormTest_StepOne extends MultiFormStep implements TestOnly {
 		);
 	}
 }
-	
+
 /**
  * @package multiform
  * @subpackage tests
@@ -159,7 +166,7 @@ class MultiFormTest_StepTwo extends MultiFormStep implements TestOnly {
 		);
 	}
 }
-	
+
 /**
  * @package multiform
  * @subpackage tests

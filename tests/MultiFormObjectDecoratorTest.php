@@ -1,4 +1,11 @@
 <?php
+
+use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\DataObject;
+/**
+ * @package multiform
+ * @subpackage tests
+ */
 class MultiFormObjectDecoratorTest extends SapphireTest {
 
 	protected static $fixture_file = 'MultiFormObjectDecoratorTest.yml';

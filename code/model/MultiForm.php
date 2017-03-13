@@ -1,5 +1,18 @@
 <?php
 
+namespace SilverStripe\MultiForm;
+
+use SilverStripe\Forms\Form;
+use SilverStripe\Core\Object;
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\FormAction;
+use SilverStripe\Forms\HiddenField;
+use SilverStripe\MultiForm\MultiFormStep;
+use SilverStripe\ORM\ArrayList;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\View\SSViewer;
+use SilverStripe\Control\Controller;
+
 /**
  * MultiForm manages the loading of single form steps, and acts as a state
  * machine that connects to a {@link MultiFormSession} object as a persistence
@@ -49,6 +62,15 @@ abstract class MultiForm extends Form {
 		'TotalStepCount' => 'Int',
 		'CompletedPercent' => 'Float'
 	);
+
+    private static $allowed_actions = array(
+        'handleField',
+        'next',
+        'prev',
+        'finish',
+        'httpSubmission',
+        'forTemplate',
+    );
 
 	/**
 	 * @var string
@@ -209,7 +231,7 @@ abstract class MultiForm extends Form {
 		$StepID = $this->controller->request->getVar('StepID');
 		if(isset($StepID)) {
 			$currentStep = DataObject::get_one(
-				'MultiFormStep',
+				MultiFormStep::class,
 				array(
 					'SessionID' => $this->session->ID,
 					'ID' => $StepID
@@ -322,12 +344,14 @@ abstract class MultiForm extends Form {
 	 * to the database, use {@link getAllStepsLinear()}.
 	 *
 	 * @param string $filter SQL WHERE statement
-	 * @return DataObjectSet|boolean A set of MultiFormStep subclasses
+     *
+	 * @return DataList|boolean A set of MultiFormStep subclasses
 	 */
 	public function getSavedSteps($filter = null) {
 		$filter .= ($filter) ? ' AND ' : '';
 		$filter .= sprintf("\"SessionID\" = '%s'", $this->session->ID);
-		return DataObject::get('MultiFormStep', $filter);
+
+		return DataObject::get(MultiFormStep::class, $filter);
 	}
 
 	/**
@@ -369,7 +393,7 @@ abstract class MultiForm extends Form {
 	 */
 	public function actionsFor($step) {
 		// Create default multi step actions (next, prev), and merge with extra actions, if any
-		$actions = (class_exists('FieldList')) ? new FieldList() : new FieldSet();
+		$actions = new FieldList();
 
 		// If the form is at final step, create a submit button to perform final actions
 		// The last step doesn't have a next button, so add that action to any step that isn't the final one
@@ -400,25 +424,21 @@ abstract class MultiForm extends Form {
 
 	/**
 	 * Return a rendered version of this form, with a specific template.
-	 * Looks through the step ancestory templates (MultiFormStep, current step
-	 * subclass template) to see if one is available to render the form with. If
-	 * any of those don't exist, look for a default Form template to render
-	 * with instead.
 	 *
-	 * @return SSViewer object to render the template with
+	 * @return array
 	 */
-	public function forTemplate() {
-		$return = $this->renderWith(array(
-			$this->getCurrentStep()->class,
-			'MultiFormStep',
-			$this->class,
-			'MultiForm',
-			'Form'
-		));
+	public function getTemplates() {
+        $templates = parent::getTemplates();
 
-		$this->clearMessage();
+        // class
+        $extra = SSViewer::get_templates_by_class($this->getCurrentStep()->class, '', MultiFormStep::class);
+        if($extra) {
+            foreach($extra as $template) {
+                array_unshift($templates, $template);
+            }
+        }
 
-		return $return;
+		return $templates;
 	}
 
 	/**
@@ -479,7 +499,7 @@ abstract class MultiForm extends Form {
 		}
 
 		// validation succeeded so we reset it to remove errors and messages
-		$this->resetValidation();
+		$this->clearFormState();
 
 		// Determine whether we can use a step already in the DB, or have to create a new one
 		if(!$nextStep = DataObject::get_one($nextStepClass, "\"SessionID\" = {$this->session->ID}")) {
@@ -597,10 +617,11 @@ abstract class MultiForm extends Form {
 	 * @return DataObjectSet of MultiFormStep instances
 	 */
 	public function getAllStepsLinear() {
-		$stepsFound = (class_exists('ArrayList')) ? new ArrayList() : new DataObjectSet();
+		$stepsFound = new ArrayList();
 
 		$firstStep = DataObject::get_one(static::$start_step, "\"SessionID\" = {$this->session->ID}");
 		$firstStep->LinkingMode = ($firstStep->ID == $this->getCurrentStep()->ID) ? 'current' : 'link';
+        $firstStep->Top = Controller::curr();
 		$firstStep->setForm($this);
 		$stepsFound->push($firstStep);
 
@@ -647,7 +668,7 @@ abstract class MultiForm extends Form {
 
 				// add the completed class
 				if (!$this->currentStepHasBeenFound) $nextStep->addExtraClass('completed');
-
+                $nextStep->Top = Controller::curr();
 				$nextStep->setForm($this);
 
 				// Add the array data, and do a callback
@@ -672,7 +693,7 @@ abstract class MultiForm extends Form {
 	 * @return int
 	 */
 	public function getCompletedStepCount() {
-		$steps = DataObject::get('MultiFormStep', "\"SessionID\" = {$this->session->ID} && \"Data\" IS NOT NULL");
+		$steps = DataObject::get(MultiFormStep::class, "\"SessionID\" = {$this->session->ID} && \"Data\" IS NOT NULL");
 
 		return $steps ? $steps->Count() : 0;
 	}

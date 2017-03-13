@@ -1,5 +1,11 @@
 <?php
 
+namespace SilverStripe\MultiForm;
+
+use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\DataQuery;
+use SilverStripe\ORM\Queries\SQLSelect;
+
 /**
  * Decorate {@link DataObject}s which are required to be saved
  * to the database directly by a {@link MultiFormStep}.
@@ -25,10 +31,12 @@ class MultiFormObjectDecorator extends DataExtension {
 	);
 
 	/**
-	 * Augment any queries to MultiFormObjectDecorator and only
-	 * return anything that isn't considered temporary.
+	 * Augment any queries to MultiFormObjectDecorator and only return anything that isn't considered temporary.
+     *
+     * @param SilverStripe\ORM\DataQuery $dataQuery
+     * @param SilverStripe\ORM\Queries\SQLSelect $query
 	 */
-	public function augmentSQL(SQLQuery &$query) {
+	public function augmentSQL(SQLSelect $query, DataQuery $dataQuery = NULL) {
 		$where = $query->getWhere();
 		if(!$where && !$this->wantsTemporary($query)) {
 			$from = array_values($query->getFrom());
