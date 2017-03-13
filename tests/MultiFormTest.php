@@ -11,6 +11,8 @@ use SilverStripe\Security\Member;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TextareaField;
+use SilverStripe\Forms\EmailField;
+
 /**
  * MultiFormTest
  * For testing purposes, we have some test classes:
