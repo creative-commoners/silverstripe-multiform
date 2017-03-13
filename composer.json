@@ -11,7 +11,7 @@
         "email": "sean@silverstripe.com"
     }],
     "require": {
-        "silverstripe/framework": "~4.*"
+        "silverstripe/framework": "~4.0"
     },
     "license": "BSD-3-Clause"
 }
