@@ -8,6 +8,9 @@ use SilverStripe\MultiForm\MultiForm;
 use SilverStripe\MultiForm\MultiFormStep;
 use SilverStripe\Security\Member;
 
+use SilverStripe\Forms\FieldList;
+use SilverStripe\Forms\TextField;
+use SilverStripe\Forms\TextareaField;
 /**
  * MultiFormTest
  * For testing purposes, we have some test classes:
@@ -167,8 +170,7 @@ class MultiFormTest_StepOne extends MultiFormStep implements TestOnly
 
     public function getFields()
     {
-        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-        return new $class(
+        return new FieldList(
             new TextField('FirstName', 'First name'),
             new TextField('Surname', 'Surname'),
             new EmailField('Email', 'Email address')
@@ -186,8 +188,7 @@ class MultiFormTest_StepTwo extends MultiFormStep implements TestOnly
 
     public function getFields()
     {
-        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-        return new $class(
+        return new FieldList(
             new TextareaField('Comments', 'Tell us a bit about yourself...')
         );
     }
@@ -203,8 +204,7 @@ class MultiFormTest_StepThree extends MultiFormStep implements TestOnly
 
     public function getFields()
     {
-        $class = (class_exists('FieldList')) ? 'FieldList' : 'FieldSet';
-        return new $class(
+        return new FieldList(
             new TextField('Test', 'Anything else you\'d like to tell us?')
         );
     }
