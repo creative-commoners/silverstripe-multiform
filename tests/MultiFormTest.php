@@ -12,6 +12,7 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\TextField;
 use SilverStripe\Forms\TextareaField;
 use SilverStripe\Forms\EmailField;
+use SilverStripe\Core\Config\Config;
 
 /**
  * MultiFormTest
