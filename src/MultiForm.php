@@ -3,7 +3,6 @@
 namespace SilverStripe\MultiForm;
 
 use SilverStripe\Forms\Form;
-use SilverStripe\Core\Object;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
@@ -12,6 +11,7 @@ use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\SSViewer;
 use SilverStripe\Control\Controller;
+use SilverStripe\Core\Injector\Injector;
 
 /**
  * MultiForm manages the loading of single form steps, and acts as a state
@@ -131,7 +131,7 @@ abstract class MultiForm extends Form
         $this->name       = $name;
 
         // Set up the session for this MultiForm instance
-        $this->setSession();
+        $this->setMultiFormSession();
 
         // Get the current step available (Note: either returns an existing
         // step or creates a new one if none available)
@@ -250,7 +250,7 @@ abstract class MultiForm extends Form
 
         // Always fall back to creating a new step (in case the session or request data is invalid)
         if (!$currentStep || !$currentStep->ID) {
-            $currentStep = Object::create($startStepClass);
+            $currentStep = Injector::inst()->create($startStepClass);
             $currentStep->SessionID = $this->session->ID;
             $currentStep->write();
             $this->session->CurrentStepID = $currentStep->ID;
@@ -284,7 +284,7 @@ abstract class MultiForm extends Form
      *
      * @return MultiFormSession
      */
-    public function getSession()
+    public function getMultiFormSession()
     {
         return $this->session;
     }
@@ -301,7 +301,7 @@ abstract class MultiForm extends Form
      * @TODO Not sure if we should bake the session stuff directly into MultiForm.
      * Perhaps it would be best dealt with on a separate class?
      */
-    protected function setSession()
+    protected function setMultiFormSession()
     {
         $this->session = $this->getCurrentSession();
 
@@ -326,21 +326,18 @@ abstract class MultiForm extends Form
     public function setCurrentSessionHash($hash)
     {
         $this->currentSessionHash = $hash;
-        $this->setSession();
+        $this->setMultiFormSession();
     }
 
     /**
      * Return the currently used {@link MultiFormSession}
+     *
      * @return MultiFormSession|boolean FALSE
      */
     public function getCurrentSession()
     {
         if (!$this->currentSessionHash) {
             $this->currentSessionHash = $this->controller->request->getVar($this->config()->get_var);
-
-            if (!$this->currentSessionHash) {
-                return false;
-            }
         }
 
         $this->session = MultiFormSession::get()->filter(array(
@@ -449,7 +446,12 @@ abstract class MultiForm extends Form
         $templates = parent::getTemplates();
 
         // class
-        $extra = SSViewer::get_templates_by_class($this->getCurrentStep()->class, '', MultiFormStep::class);
+        if ($this->getCurrentStep()->class) {
+            $extra = SSViewer::get_templates_by_class($this->getCurrentStep()->class, '', MultiFormStep::class);
+        } else {
+            $extra = SSViewer::get_templates_by_class(MultiFormStep::class);
+        }
+
         if ($extra) {
             foreach ($extra as $template) {
                 array_unshift($templates, $template);
@@ -479,7 +481,8 @@ abstract class MultiForm extends Form
         }
 
         if (!$this->getCurrentStep()->validateStep($data, $form)) {
-            Session::set("FormInfo.{$form->FormName()}.data", $form->getData());
+            $form->setSessionData($form->getData());
+
             $this->controller->redirectBack();
             return false;
         }
@@ -513,7 +516,7 @@ abstract class MultiForm extends Form
         // built-in functionality). The data needs to be manually saved on error
         // so the form is re-populated.
         if (!$this->getCurrentStep()->validateStep($data, $form)) {
-            Session::set("FormInfo.{$form->FormName()}.data", $form->getData());
+            $form->setSessionData($form->getData());
             $this->controller->redirectBack();
             return false;
         }
@@ -523,7 +526,7 @@ abstract class MultiForm extends Form
 
         // Determine whether we can use a step already in the DB, or have to create a new one
         if (!$nextStep = DataObject::get_one($nextStepClass, "\"SessionID\" = {$this->session->ID}")) {
-            $nextStep = Object::create($nextStepClass);
+            $nextStep = Injector::inst()->create($nextStepClass);
             $nextStep->SessionID = $this->session->ID;
             $nextStep->write();
         }
@@ -682,6 +685,7 @@ abstract class MultiForm extends Form
             if ($step->getNextStep()) {
                 // Is this step in the DB? If it is, we use that
                 $nextStep = $step->getNextStepFromDatabase();
+
                 if (!$nextStep) {
                     // If it's not in the DB, we use a singleton instance of it instead -
                     // - this step hasn't been accessed yet
@@ -710,6 +714,7 @@ abstract class MultiForm extends Form
         } else {
             return $stepsFound;
         }
+
     }
 
     /**
@@ -725,7 +730,9 @@ abstract class MultiForm extends Form
      */
     public function getCompletedStepCount()
     {
-        $steps = DataObject::get(MultiFormStep::class, "\"SessionID\" = {$this->session->ID} && \"Data\" IS NOT NULL");
+        $steps = DataObject::get(MultiFormStep::class, "
+            \"SessionID\" = {$this->session->ID} && \"Data\" IS NOT NULL"
+        );
 
         return $steps ? $steps->Count() : 0;
     }

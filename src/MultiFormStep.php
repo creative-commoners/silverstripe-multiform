@@ -103,7 +103,7 @@ class MultiFormStep extends DataObject
      */
     public function getFields()
     {
-        user_error('Please implement getFields on your MultiFormStep subclass', E_USER_ERROR);
+        user_error('Please implement getFields on your '. get_class($this), E_USER_ERROR);
     }
 
     /**
@@ -138,32 +138,33 @@ class MultiFormStep extends DataObject
      */
     public function getTitle()
     {
-        return $this->title ? $this->title : $this->class;
+        return $this->title ? $this->title : $this->getClassName();
     }
 
     /**
-     * Gets a direct link to this step (only works
-     * if you're allowed to skip steps, or this step
-     * has already been saved to the database
-     * for the current {@link MultiFormSession}).
+     * Gets a direct link to this step (only works if you're allowed to skip
+     * steps, or this step has already been saved to the database for the
+     * current {@link MultiFormSession}).
      *
      * @return string Relative URL to this step
      */
     public function Link()
     {
         $form = $this->form;
-        return Controller::join_links($form->getDisplayLink(), "?{$form->config()->get_var}={$this->Session()->Hash}");
+        $link = Controller::join_links($form->getDisplayLink(), "?{$form->config()->get_var}={$this->Session()->Hash}");
+
+        $this->extend('updateLink', $link);
+
+        return $link;
     }
 
     /**
-     * Unserialize stored session data and return it.
-     * This is used for loading data previously saved
-     * in session back into the form.
+     * Unserialize stored session data and return it. This is used for loading
+     * data previously saved in session back into the form.
      *
-     * You need to overload this method onto your own
-     * step if you require custom loading. An example
-     * would be selective loading specific fields, leaving
-     * others that are not required.
+     * You need to overload this method onto your own step if you require
+     * custom loading. An example would be selective loading specific fields,
+     * leaving others that are not required.
      *
      * @return array
      */
@@ -240,7 +241,7 @@ class MultiFormStep extends DataObject
         // Check if next_steps have been implemented properly if not the final step
         if (!$this->isFinalStep()) {
             if (!isset($nextSteps)) {
-                user_error('MultiFormStep->getNextStep(): Please define at least one $next_steps on ' . $this->class, E_USER_ERROR);
+                user_error('MultiFormStep->getNextStep(): Please define at least one $next_steps on ' . $this->getClassName(), E_USER_ERROR);
             }
         }
 
@@ -269,8 +270,14 @@ class MultiFormStep extends DataObject
 
             if (is_string($nextSteps)) {
                 return DataObject::get_one($nextSteps, "\"SessionID\" = {$this->SessionID}");
-            } elseif (is_array($nextSteps)) {
-                return DataObject::get_one($nextSteps[0], "\"SessionID\" = {$this->SessionID}");
+            } else if (is_array($nextSteps)) {
+                foreach ($nextSteps as $step) {
+                    if ($exists = DataObject::get_one($step, "\"SessionID\" = {$this->SessionID}")) {
+                        return $exists;
+                    }
+                }
+            } else if ($this->hasMethod('getNextStep')) {
+                return DataObject::get_one($this->getNextStep(), "\"SessionID\" = {$this->SessionID}");
             } else {
                 return false;
             }
@@ -298,13 +305,15 @@ class MultiFormStep extends DataObject
     public function getPreviousStep()
     {
         $steps = DataObject::get(MultiFormStep::class, "\"SessionID\" = {$this->SessionID}", '"LastEdited" DESC');
+        $class = $this->getClassName();
+
         if ($steps) {
             foreach ($steps as $step) {
                 $step->setForm($this->form);
 
                 if ($step->getNextStep()) {
-                    if ($step->getNextStep() == $this->class) {
-                        return $step->class;
+                    if ($step->getNextStep() == $class) {
+                        return $step->getClassName();
                     }
                 }
             }
@@ -363,11 +372,19 @@ class MultiFormStep extends DataObject
     }
 
     /**
-     * @return Form
+     * @return SilverStripe\Forms\Form
      */
     public function getForm()
     {
         return $this->form;
+    }
+
+    /**
+     * @return SilverStripe\Control\Controller
+     */
+    public function getController()
+    {
+        return $this->form->getController();
     }
 
     // ##################### Utility ####################
@@ -406,7 +423,7 @@ class MultiFormStep extends DataObject
      */
     public function isCurrentStep()
     {
-        return ($this->class == $this->Session()->CurrentStep()->class) ? true : false;
+        return ($this->getClassName() == $this->Session()->CurrentStep()->getClassName());
     }
 
     /**

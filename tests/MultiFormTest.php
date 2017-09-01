@@ -58,7 +58,7 @@ class MultiFormTest extends FunctionalTest
     public function testInitialisingForm()
     {
         $this->assertTrue(is_numeric($this->form->getCurrentStep()->ID) && ($this->form->getCurrentStep()->ID > 0));
-        $this->assertTrue(is_numeric($this->form->getSession()->ID) && ($this->form->getSession()->ID > 0));
+        $this->assertTrue(is_numeric($this->form->getMultiFormSession()->ID) && ($this->form->getMultiFormSession()->ID > 0));
         $this->assertEquals('MultiFormTest_StepOne', $this->form->getStartStep());
     }
 
