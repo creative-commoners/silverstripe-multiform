@@ -7,42 +7,39 @@ use SilverStripe\Forms\FieldList;
 use SilverStripe\Control\Controller;
 
 /**
- * MultiFormStep controls the behaviour of a single form step in the MultiForm
- * process. All form steps are required to be subclasses of this class, as it
- * encapsulates the functionality required for the step to be aware of itself
- * in the process by knowing what it's next step is, and if applicable, it's previous
- * step.
+ * MultiFormStep controls the behaviour of a single form step in the MultiForm process. All form steps are required to
+ * be subclasses of this class, as it encapsulates the functionality required for the step to be aware of itself
+ * in the process by knowing what it's next step is, and if applicable, it's previous step.
  *
  * @package multiform
  */
-class MultiFormStep extends DataObject
+class Step extends DataObject
 {
     private static $db = array(
         'Data' => 'Text' // stores serialized maps with all session information
     );
 
     private static $has_one = array(
-        'Session' => 'SilverStripe\MultiForm\MultiFormSession'
+        'Session' => 'SilverStripe\MultiForm\Session'
     );
+
+    private static $table_name = 'MultiFormStep';
 
     /**
      * Centerpiece of the flow control for the form.
      *
-     * If set to a string, you have a linear form flow
-     * If set to an array, you should use {@link getNextStep()}
-     * to enact flow control and branching to different form
-     * steps, most likely based on previously set session data
-     * (e.g. a checkbox field or a dropdown).
+     * If set to a string, you have a linear form flow.
+     *
+     * If set to an array, you should use {@link getNextStep()} to enact flow control and branching to different form
+     * steps, most likely based on previously set session data (e.g. a checkbox field or a dropdown).
      *
      * @var array|string
      */
     public static $next_steps;
 
     /**
-     * Each {@link MultiForm} subclass needs at least
-     * one step which is marked as the "final" one
-     * and triggers the {@link MultiForm->finish()}
-     * method that wraps up the whole submission.
+     * Each {@link MultiForm} subclass needs at least one step which is marked as the "final" one and triggers the
+     * {@link MultiForm->finish()} method that wraps up the whole submission.
      *
      * @var boolean
      */

@@ -3,7 +3,7 @@
 namespace SilverStripe\MultiForm;
 
 use SilverStripe\ORM\DataObject;
-use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 
 /**
  * Serializes one or more {@link MultiFormStep}s into a database object.
@@ -13,32 +13,35 @@ use SilverStripe\Security\Member;
  *
  * @package multiform
  */
-class MultiFormSession extends DataObject
+class Session extends DataObject
 {
     private static $db = array(
-        'Hash' => 'Varchar(40)',    // cryptographic hash identification to this session
-        'IsComplete' => 'Boolean'    // flag to determine if this session is marked completed
+        'Hash' => 'Varchar(40)',
+        'IsComplete' => 'Boolean'
     );
 
     private static $has_one = array(
         'Submitter' => 'SilverStripe\Security\Member',
-        'CurrentStep' => 'SilverStripe\MultiForm\MultiFormStep'
+        'CurrentStep' => 'SilverStripe\MultiForm\Step'
     );
 
     private static $has_many = array(
-        'FormSteps' => 'SilverStripe\MultiForm\MultiFormStep'
+        'FormSteps' => 'SilverStripe\MultiForm\Step'
     );
+
+    private static $table_name = 'MultiFormSession';
 
     /**
      * Mark this session as completed.
      *
-     * This sets the flag "IsComplete" to true,
-     * and writes the session back.
+     * This sets the flag "IsComplete" to true and writes the session back.
      */
     public function markCompleted()
     {
         $this->IsComplete = 1;
         $this->write();
+
+        return $this;
     }
 
     /**
@@ -46,8 +49,8 @@ class MultiFormSession extends DataObject
      */
     public function onBeforeWrite()
     {
-        // save submitter if a Member is logged in
-        $currentMember = Member::currentUser();
+        $currentMember = Security::getCurrentUser();
+
         if (!$this->SubmitterID && $currentMember) {
             $this->SubmitterID = $currentMember->ID;
         }
@@ -60,8 +63,8 @@ class MultiFormSession extends DataObject
      */
     public function onBeforeDelete()
     {
-        // delete dependent form steps and relation
         $steps = $this->FormSteps();
+
         if ($steps) {
             foreach ($steps as $step) {
                 if ($step && $step->exists()) {

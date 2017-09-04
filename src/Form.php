@@ -2,7 +2,7 @@
 
 namespace SilverStripe\MultiForm;
 
-use SilverStripe\Forms\Form;
+use SilverStripe\Forms;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
@@ -27,7 +27,7 @@ use SilverStripe\Core\Injector\Injector;
  *
  * @package multiform
  */
-abstract class MultiForm extends Form
+abstract class Form extends \SilverStripe\Forms\Form
 {
 
     /**
