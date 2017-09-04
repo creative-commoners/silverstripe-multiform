@@ -6,7 +6,8 @@ use SilverStripe\Forms;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\FormAction;
 use SilverStripe\Forms\HiddenField;
-use SilverStripe\MultiForm\MultiFormStep;
+use SilverStripe\MultiForm\Step;
+use SilverStripe\MultiForm\Session;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\View\SSViewer;
@@ -34,12 +35,12 @@ abstract class Form extends \SilverStripe\Forms\Form
      * A session object stored in the database, to identify and store
      * data for this MultiForm instance.
      *
-     * @var MultiFormSession
+     * @var MultiForm\Session
      */
     protected $session;
 
     /**
-     * The current encrypted MultiFormSession identification.
+     * The current encrypted MultiForm\Session identification.
      *
      * @var string
      */
@@ -238,7 +239,7 @@ abstract class Form extends \SilverStripe\Forms\Form
         $StepID = $this->controller->request->getVar('StepID');
         if (isset($StepID)) {
             $currentStep = DataObject::get_one(
-                MultiFormStep::class,
+                Step::class,
                 array(
                     'SessionID' => $this->session->ID,
                     'ID' => $StepID
@@ -307,7 +308,7 @@ abstract class Form extends \SilverStripe\Forms\Form
 
         // If there was no session found, create a new one instead
         if (!$this->session) {
-            $this->session = new MultiFormSession();
+            $this->session = new Session();
         }
 
         // Create encrypted identification to the session instance if it doesn't exist
@@ -340,7 +341,7 @@ abstract class Form extends \SilverStripe\Forms\Form
             $this->currentSessionHash = $this->controller->request->getVar($this->config()->get_var);
         }
 
-        $this->session = MultiFormSession::get()->filter(array(
+        $this->session = Session::get()->filter(array(
             "Hash" => $this->currentSessionHash,
             "IsComplete" => 0
         ))->first();
@@ -363,7 +364,7 @@ abstract class Form extends \SilverStripe\Forms\Form
         $filter .= ($filter) ? ' AND ' : '';
         $filter .= sprintf("\"SessionID\" = '%s'", $this->session->ID);
 
-        return DataObject::get(MultiFormStep::class, $filter);
+        return DataObject::get(Step::class, $filter);
     }
 
     /**
@@ -447,9 +448,9 @@ abstract class Form extends \SilverStripe\Forms\Form
 
         // class
         if ($this->getCurrentStep()->class) {
-            $extra = SSViewer::get_templates_by_class($this->getCurrentStep()->class, '', MultiFormStep::class);
+            $extra = SSViewer::get_templates_by_class($this->getCurrentStep()->class, '', Step::class);
         } else {
-            $extra = SSViewer::get_templates_by_class(MultiFormStep::class);
+            $extra = SSViewer::get_templates_by_class(Step::class);
         }
 
         if ($extra) {
@@ -594,8 +595,6 @@ abstract class Form extends \SilverStripe\Forms\Form
         return;
     }
 
-    // ############ Misc ############
-
     /**
      * Add the MultiFormSessionID variable to the URL on form submission.
      * This is a means to persist the session, by adding it's identification
@@ -730,7 +729,7 @@ abstract class Form extends \SilverStripe\Forms\Form
      */
     public function getCompletedStepCount()
     {
-        $steps = DataObject::get(MultiFormStep::class, "
+        $steps = DataObject::get(Step::class, "
             \"SessionID\" = {$this->session->ID} && \"Data\" IS NOT NULL"
         );
 

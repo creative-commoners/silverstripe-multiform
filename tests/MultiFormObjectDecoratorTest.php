@@ -46,10 +46,3 @@ class MultiFormObjectDecoratorTest extends SapphireTest
         $this->assertContains('Test 3', $records);
     }
 }
-
-class MultiFormObjectDecorator_DataObject extends DataObject implements TestOnly
-{
-    private static $db = array(
-        'Name' => 'Varchar'
-    );
-}

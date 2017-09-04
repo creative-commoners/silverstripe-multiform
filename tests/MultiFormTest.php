@@ -1,11 +1,13 @@
 <?php
 
+namespace SilverStripe\MultiForm\Tests;
+
 use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\Dev\TestOnly;
 
 use SilverStripe\Control\Controller;
-use SilverStripe\MultiForm\MultiForm;
-use SilverStripe\MultiForm\MultiFormStep;
+use SilverStripe\MultiForm\Form;
+use SilverStripe\MultiForm\Step;
 use SilverStripe\Security\Member;
 
 use SilverStripe\Forms\FieldList;
@@ -128,87 +130,3 @@ class MultiFormTest extends FunctionalTest
     }
 }
 
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_Form extends MultiForm implements TestOnly
-{
-    public static $start_step = 'MultiFormTest_StepOne';
-
-    public function getStartStep()
-    {
-        return self::$start_step;
-    }
-}
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_Controller extends Controller implements TestOnly
-{
-    public function Link($action = null)
-    {
-        return 'MultiFormTest_Controller';
-    }
-
-    public function Form($request = null)
-    {
-        $form = new MultiFormTest_Form($this, 'Form');
-        $form->setHTMLID('MultiFormTest_Form');
-        return $form;
-    }
-}
-
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_StepOne extends MultiFormStep implements TestOnly
-{
-    public static $next_steps = 'MultiFormTest_StepTwo';
-
-    public function getFields()
-    {
-        return new FieldList(
-            new TextField('FirstName', 'First name'),
-            new TextField('Surname', 'Surname'),
-            new EmailField('Email', 'Email address')
-        );
-    }
-}
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_StepTwo extends MultiFormStep implements TestOnly
-{
-    public static $next_steps = 'MultiFormTest_StepThree';
-
-    public function getFields()
-    {
-        return new FieldList(
-            new TextareaField('Comments', 'Tell us a bit about yourself...')
-        );
-    }
-}
-
-/**
- * @package multiform
- * @subpackage tests
- */
-class MultiFormTest_StepThree extends MultiFormStep implements TestOnly
-{
-    public static $is_final_step = true;
-
-    public function getFields()
-    {
-        return new FieldList(
-            new TextField('Test', 'Anything else you\'d like to tell us?')
-        );
-    }
-}

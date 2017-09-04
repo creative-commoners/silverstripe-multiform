@@ -301,7 +301,10 @@ class Step extends DataObject
      */
     public function getPreviousStep()
     {
-        $steps = DataObject::get(MultiFormStep::class, "\"SessionID\" = {$this->SessionID}", '"LastEdited" DESC');
+        $steps = Step::get()->filter([
+            'SessionID' => $this->SessionID
+        ])->sort('LastEdited', 'DESC');
+
         $class = $this->getClassName();
 
         if ($steps) {
@@ -384,11 +387,7 @@ class Step extends DataObject
         return $this->form->getController();
     }
 
-    // ##################### Utility ####################
-
     /**
-     * Determines whether the user is able to go back using the "action_back"
-     * Determines whether the user is able to go back using the "action_back"
      * Determines whether the user is able to go back using the "action_back"
      * form action, based on the boolean value of $can_go_back.
      *
@@ -477,7 +476,7 @@ class Step extends DataObject
     {
         // load the steps in the cache, if this one doesn't exist
         if (!array_key_exists('steps_' . $fromStep, $this->step_data_cache)) {
-            $steps = MultiFormStep::get()->filter('SessionID', $this->form->session->ID);
+            $steps = Step::get()->filter('SessionID', $this->form->session->ID);
 
             if ($steps) {
                 foreach ($steps as $step) {

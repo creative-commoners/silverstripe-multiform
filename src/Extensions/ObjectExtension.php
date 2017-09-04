@@ -1,24 +1,20 @@
 <?php
 
-namespace SilverStripe\MultiForm;
+namespace SilverStripe\MultiForm\Extensions;
 
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\DataQuery;
 use SilverStripe\ORM\Queries\SQLSelect;
 
 /**
- * Decorate {@link DataObject}s which are required to be saved
- * to the database directly by a {@link MultiFormStep}.
- * Only needed for objects which aren't stored in the session,
- * which is the default.
+ * Decorate {@link DataObject}s which are required to be saved to the database directly by a {@link MultiFormStep}.
  *
- * This decorator also augments get() requests to the datalayer
- * by automatically filtering out temporary objects.
- * You can override this filter by putting the following statement
- * in your WHERE clause:
+ * Only needed for objects which aren't stored in the session, which is the default.
+ *
+ * This decorator also augments get() requests to the ORM by automatically filtering out temporary objects.
+ * You can override this filter by putting the following statement in your WHERE clause:
+ *
  * `<MyDataObjectClass>`.`MultiFormIsTemporary` = 1
- *
- * @package multiform
  */
 class MultiFormObjectDecorator extends DataExtension
 {
@@ -27,7 +23,7 @@ class MultiFormObjectDecorator extends DataExtension
     );
 
     private static $has_one = array(
-        'MultiFormSession' => 'MultiFormSession',
+        'MultiFormSession' => 'SilverStripe\MultiForm\Session',
     );
 
     /**
